@@ -80,6 +80,9 @@ public class ValidateRules implements Runnable{
     @Autowired
     EXISTS_IN_LOCAL_MANUFACTURER_DB existsInLocalManufacturerDb;
 
+    @Autowired
+    ModuleAlertService moduleAlertService;
+
     @Override
     public void run() {
         int executionStartTime = Math.toIntExact(System.currentTimeMillis() / 1000);
@@ -331,17 +334,18 @@ public class ValidateRules implements Runnable{
             ModulesAuditTrail foreignCompletedAudit = ModulesAuditTrailBuilder.forUpdate(foreignModuleTrailId, 200, "completed", "NA", "National Whitelist", "UPDATE", "Process completed for Foreign Whitelist", "foreign_whitelist", executionStartTime, startTime);
             modulesAuditTrailRepository.save(foreignCompletedAudit);
         } catch (DataAccessException e) {
-            log.error("DB Exception: Raising alert016 "+e);
+            log.error("DB Exception: Raising alert016 " + e);
+//            e.printStackTrace();
             String msg = e.getMessage().length() <= 200?e.getMessage(): e.getMessage().substring(0, 200);
-            e.printStackTrace();
-            Optional<CfgFeatureAlert> alert = cfgFeatureAlertRepository.findByAlertId("alert016");
+            moduleAlertService.sendDatabaseAlert(msg);
+//            Optional<CfgFeatureAlert> alert = cfgFeatureAlertRepository.findByAlertId("alert016");
             log.error("raising alert016");
-            System.out.println("raising alert016");
-            if (alert.isPresent()) {
-                raiseAnAlert(alert.get().getAlertId(), msg, "national_whitelist", 0);
+//            if (alert.isPresent()) {
+
+//                raiseAnAlert(alert.get().getAlertId(), msg, "national_whitelist", 0);
 //                RunningAlertDb alertDb = new RunningAlertDb(alert.get().getAlertId(), alert.get().getDescription().replace("<ERROR>", msg), 0);
 //                runningAlertDbRepo.save(alertDb);
-            }
+//            }
             if (moduleAudiTrailId == 0) {
                 ModulesAuditTrail audit = ModulesAuditTrailBuilder.forInsert(501, "failed", msg, "National Whitelist", "INSERT", 0,"Exception during national whitelist process", "national_whitelist", startTime);
                 modulesAuditTrailRepository.save(audit);
@@ -374,14 +378,14 @@ public class ValidateRules implements Runnable{
                 ModulesAuditTrail audit = ModulesAuditTrailBuilder.forUpdate(foreignModuleTrailId, 501, "failed", msg, "National Whitelist", "UPDATE", "Exception during exception whitelist process", "foreign_whitelist", executionStartTime, startTime);
                 modulesAuditTrailRepository.save(audit);
             }
-            Optional<CfgFeatureAlert> alert = cfgFeatureAlertRepository.findByAlertId("alert1209");
-            log.error("raising alert1209");
-            System.out.println("raising alert1209");
-            if (alert.isPresent()) {
-                raiseAnAlert(alert.get().getAlertId(), msg, "national_whitelist", 0);
+//            Optional<CfgFeatureAlert> alert = cfgFeatureAlertRepository.findByAlertId("alert1209");
+//            log.error("raising alert1209");
+            moduleAlertService.sendModuleExecutionAlert(msg);
+//            if (alert.isPresent()) {
+//                raiseAnAlert(alert.get().getAlertId(), msg, "national_whitelist", 0);
 //                RunningAlertDb alertDb = new RunningAlertDb(alert.get().getAlertId(), alert.get().getDescription().replace("<ERROR>", msg), 0);
 //                runningAlertDbRepo.save(alertDb);
-            }
+//            }
         } finally {
             log.info("Process Completed");
             System.out.println("Process Completed");
@@ -436,7 +440,7 @@ public class ValidateRules implements Runnable{
         }
     }
 
-    public void raiseAnAlert(String alertCode, String alertMessage, String alertProcess, int userId) {
+    /*public void raiseAnAlert(String alertCode, String alertMessage, String alertProcess, int userId) {
         try {   // <e>  alertMessage    //      <process_name> alertProcess
             String path = System.getenv("APP_HOME") + "alert/start.sh";
             ProcessBuilder pb = new ProcessBuilder(path, alertCode, alertMessage, alertProcess, String.valueOf(userId));
@@ -452,7 +456,7 @@ public class ValidateRules implements Runnable{
             ex.printStackTrace();
             log.error("Not able to execute Alert mgnt jar "+ ex.getLocalizedMessage() + " ::: " + ex.getMessage());
         }
-    }
+    }*/
 
     public boolean madeProgressSince(long timestamp) {
         return lastProgressTime >= timestamp;
