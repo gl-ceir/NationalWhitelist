@@ -18,6 +18,9 @@ public class WatchdogService implements Runnable {
     @Autowired
     private CfgFeatureAlertRepository cfgFeatureAlertRepository;
 
+    @Autowired
+    private ModuleAlertService moduleAlertService;
+
     public WatchdogService(ValidateRules validateRules) {
         this.validateRules = validateRules;
     }
@@ -36,13 +39,12 @@ public class WatchdogService implements Runnable {
                 if (elapsed > MAX_IDLE_TIME_MS) {
                     log.error("Exiting National Whitelist process due to inactivity for 60 minutes.");
                     Optional<CfgFeatureAlert> alert = cfgFeatureAlertRepository.findByAlertId("alert1209");
-                    log.error("raising alert1209");
-                    System.out.println("raising alert1209");
-                    if (alert.isPresent()) {
-                        validateRules.raiseAnAlert(alert.get().getAlertId(), "Exiting National Whitelist process due to inactivity for 60 minutes.", "national_whitelist", 0);
+                    moduleAlertService.sendModuleExecutionAlert("Exiting National Whitelist process due to inactivity for 60 minutes.");
+//                    if (alert.isPresent()) {
+//                        validateRules.raiseAnAlert(alert.get().getAlertId(), "Exiting National Whitelist process due to inactivity for 60 minutes.", "national_whitelist", 0);
 //                RunningAlertDb alertDb = new RunningAlertDb(alert.get().getAlertId(), alert.get().getDescription().replace("<ERROR>", msg), 0);
 //                runningAlertDbRepo.save(alertDb);
-                    }
+//                    }
                     System.exit(0);
                 }
             }
